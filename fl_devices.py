@@ -118,6 +118,7 @@ class Server(FederatedTrainingDevice):
     def __init__(self, model_fn, data):
         super().__init__(model_fn, data)
         self.loader = DataLoader(self.data, batch_size=128, shuffle=False)
+        self.model_cache = []
     
     def select_clients(self, clients, frac=1.0):
         return random.sample(clients, int(len(clients)*frac)) 
@@ -148,4 +149,10 @@ class Server(FederatedTrainingDevice):
     def compute_mean_update_norm(self, cluster):
         return torch.norm(torch.mean(torch.stack([flatten(client.dW) for client in cluster]), 
                                      dim=0)).item()
+
+    def cache_model(self, idcs, params, accuracies):
+        self.model_cache += [(idcs, 
+                            {name : params[name].data.clone() for name in params}, 
+                            [accuracies[i] for i in idcs])]
+
 
