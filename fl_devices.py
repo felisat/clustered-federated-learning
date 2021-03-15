@@ -112,6 +112,9 @@ class Client(FederatedTrainingDevice):
 
     def reset(self): 
         copy(target=self.W, source=self.W_old)
+
+    def getId(self):
+        return self.id
     
     
 class Server(FederatedTrainingDevice):
@@ -126,16 +129,6 @@ class Server(FederatedTrainingDevice):
     def aggregate_weight_updates(self, clients):
         reduce_add_average(target=self.W, sources=[client.dW for client in clients])
         
-    def compute_pairwise_similarities(self, clients):
-        return pairwise_angles([client.dW for client in clients])
-  
-    def cluster_clients(self, S):
-        clustering = AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(-S)
-
-        c1 = np.argwhere(clustering.labels_ == 0).flatten() 
-        c2 = np.argwhere(clustering.labels_ == 1).flatten() 
-        return c1, c2
-    
     def aggregate_clusterwise(self, client_clusters):
         for cluster in client_clusters:
             reduce_add_average(targets=[client.W for client in cluster], 
